@@ -27,16 +27,28 @@ let socket: WebSocket;
 
 const token = 'd5c34b8138c24c791927b96995b41bb483d93ada';
 const port = 59650;
-const host = '127.0.0.1';
+// const host = location.hostname;
+const host = '192.168.0.183';
 const url = `http://${host}:${port}/api`;
 
 let nextRequestId = 1;
 const requests: Request[] = [];
 const subscriptions: { [key: string]: any } = {};
 
+const connectSubscribers: Set<() => void> = new Set();
+const disconnectSubscribers: Set<() => void> = new Set();
+
 const { logMessage } = useLog();
 
-watch(status, (newStatus) => logMessage(newStatus, 'connection'));
+watch(status, (newStatus) => {
+	logMessage(newStatus, 'connection');
+
+	if (status.value === ConnectionStatus.Connected) {
+		connectSubscribers.forEach((cb) => cb());
+	} else if (status.value === ConnectionStatus.Disconnected) {
+		disconnectSubscribers.forEach((cb) => cb());
+	}
+});
 
 /**
  * Main way of bringing functionality into components. Will automatically attempt to connect the first time it's used.
@@ -91,23 +103,33 @@ function disconnect() {
 /**
  * Helper for running code once the connection is established, or immediately if already established
  */
-function onConnected(cb: Function) {
-	watchEffect(() => {
-		if (status.value === ConnectionStatus.Connected) {
-			cb();
-		}
-	});
+function onConnected(cb: () => void, activateOnce: boolean = false): void {
+	if (activateOnce) {
+		const stop = watchEffect(() => {
+			if (status.value === ConnectionStatus.Connected) {
+				cb();
+				setTimeout(stop, 0);
+			}
+		});
+	} else {
+		if (status.value === ConnectionStatus.Connected) cb();
+		connectSubscribers.add(cb);
+	}
 }
 
 /**
- * Helper for running code once the connection is established, or immediately if already established
+ * Helper for running code once the connection is disconnected
  */
-function onDisconnected(cb: Function) {
-	watchEffect(() => {
-		if (status.value === ConnectionStatus.Disconnected) {
-			cb();
-		}
-	});
+function onDisconnected(cb: () => void, activateOnce: boolean = false): void {
+	if (activateOnce) {
+		const stop = watch(status, () => {
+			if (status.value === ConnectionStatus.Disconnected) {
+				cb();
+				setTimeout(stop, 0);
+			}
+		});
+	}
+	disconnectSubscribers.add(cb);
 }
 
 /**

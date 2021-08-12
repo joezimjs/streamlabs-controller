@@ -15,6 +15,33 @@ const nullScene = { id: '', name: '', resourceId: '', nodes: [] };
 export const useScenes = defineStore({
 	id: 'scenes',
 
+	__initialize: (store) => {
+		onConnected(async () => {
+			store.scenes = await request('ScenesService', 'getScenes');
+			store.activeScene = await request('ScenesService', 'activeScene');
+
+			subscribe('ScenesService', 'sceneSwitched', (newScene: Scene) => {
+				store.activeScene = store.scenes.find((scene: Scene) => scene.id === newScene.id) || nullScene;
+			});
+
+			subscribe('ScenesService', 'sceneAdded', (scene: Scene) => {
+				store.scenes.push(scene);
+			});
+
+			subscribe('ScenesService', 'sceneRemoved', (removedScene: Scene) => {
+				store.scenes.splice(
+					store.scenes.findIndex((scene: Scene) => scene.id == removedScene.id),
+					1
+				);
+			});
+		});
+
+		onDisconnected(() => {
+			store.scenes = [];
+			store.activeScene = nullScene;
+		});
+	},
+
 	state: () => ({
 		scenes: [] as Scene[],
 		activeScene: nullScene as Scene,
@@ -27,36 +54,6 @@ export const useScenes = defineStore({
 		},
 		selectScene(scene: Scene) {
 			request(scene.resourceId, 'makeActive');
-		},
-		initialize() {
-			if (!this.isInitialized) {
-				this.isInitialized = true;
-
-				onConnected(async () => {
-					this.scenes = await request('ScenesService', 'getScenes');
-					this.activeScene = await request('ScenesService', 'activeScene');
-
-					subscribe('ScenesService', 'sceneSwitched', (newScene: Scene) => {
-						this.activeScene = this.scenes.find((scene) => scene.id === newScene.id) || nullScene;
-					});
-
-					subscribe('ScenesService', 'sceneAdded', (scene: Scene) => {
-						this.scenes.push(scene);
-					});
-
-					subscribe('ScenesService', 'sceneRemoved', (removedScene: Scene) => {
-						this.scenes.splice(
-							this.scenes.findIndex((scene) => scene.id == removedScene.id),
-							1
-						);
-					});
-				});
-
-				onDisconnected(() => {
-					this.scenes = [];
-					this.activeScene = nullScene;
-				});
-			}
 		},
 	},
 });

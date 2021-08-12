@@ -1,5 +1,5 @@
 <template>
-	<ControlButton :disabled="disabled" @click="toggleStreaming">{{
+	<ControlButton :disabled="disabled" :is-active="isStreaming" @click="toggleStreaming">{{
 		isStreaming ? 'Streaming' : 'Go Live'
 	}}</ControlButton>
 </template>
@@ -20,12 +20,13 @@ export default defineComponent({
 		let disabled: Ref<boolean> = computed(() => status.value !== ConnectionStatus.Connected);
 
 		onConnected(() => {
+			// console.log('STREAM BUTTON ON CONNECT');
 			subscribe(
 				'StreamingService',
 				'streamingStatusChange',
-				(status: StreamingStatus) => ((streamingStatus.value = status), console.log(status))
+				(status: StreamingStatus) => (streamingStatus.value = status)
 			);
-		});
+		}, true);
 
 		function toggleStreaming() {
 			if (status.value === ConnectionStatus.Connected) {

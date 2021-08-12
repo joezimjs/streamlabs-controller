@@ -30,10 +30,7 @@ export default defineComponent({
 	cursor: pointer;
 
 	&:active,
-	&:hover {
-		border-color: rebeccapurple;
-	}
-
+	&:hover,
 	&:focus {
 		outline: none;
 		box-shadow: 0 0 10px 1px rebeccapurple;

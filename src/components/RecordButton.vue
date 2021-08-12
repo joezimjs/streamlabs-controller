@@ -1,5 +1,5 @@
 <template>
-	<ControlButton :disabled="disabled" @click="toggleRecording">{{
+	<ControlButton :disabled="disabled" :is-active="isRecording" @click="toggleRecording">{{
 		isRecording ? 'Recording' : 'Record'
 	}}</ControlButton>
 </template>
@@ -20,12 +20,13 @@ export default defineComponent({
 		let disabled: Ref<boolean> = computed(() => status.value !== ConnectionStatus.Connected);
 
 		onConnected(() => {
+			// console.log('RECORD BUTTON ON CONNECT');
 			subscribe(
 				'StreamingService',
 				'recordingStatusChange',
 				(status: RecordingStatus) => (recordingStatus.value = status)
 			);
-		});
+		}, true);
 
 		function toggleRecording() {
 			if (status.value === ConnectionStatus.Connected) {
