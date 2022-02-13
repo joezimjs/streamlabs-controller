@@ -1,5 +1,5 @@
-import SockJS from 'sockjs-client';
-import { ref, Ref, watch, watchEffect } from 'vue';
+import OBSWebSocket from 'obs-websocket-js';
+import { ref, Ref } from 'vue';
 import { useLog } from './useLog';
 
 export enum ConnectionStatus {
@@ -9,45 +9,28 @@ export enum ConnectionStatus {
 	Connected = 'connected',
 }
 
-type RequestBody = {
-	jsonrpc: string;
-	id: number;
-	method: string;
-	params: { resource: string; args: any };
-};
-
-type Request = {
-	body: RequestBody;
-	resolve: Function;
-	reject: Function;
-};
-
+const socket = new OBSWebSocket();
 const status: Ref<ConnectionStatus> = ref(ConnectionStatus.Disconnected);
-let socket: WebSocket;
+const eventsSubscribedTo: string[] = [];
 
-const token = 'd5c34b8138c24c791927b96995b41bb483d93ada';
-const port = 59650;
-// const host = location.hostname;
-const host = '192.168.0.183';
-const url = `http://${host}:${port}/api`;
-
-let nextRequestId = 1;
-const requests: Request[] = [];
-const subscriptions: { [key: string]: any } = {};
-
-const connectSubscribers: Set<() => void> = new Set();
-const disconnectSubscribers: Set<() => void> = new Set();
+const host = location.hostname;
+const port = 4444;
+const url = `${host}:${port}`;
+const password = 'Z1mm3rm4n!';
 
 const { logMessage } = useLog();
 
-watch(status, (newStatus) => {
-	logMessage(newStatus, 'connection');
+subscribe('ConnectionOpened', () => {
+	status.value = ConnectionStatus.Connected;
+});
 
-	if (status.value === ConnectionStatus.Connected) {
-		connectSubscribers.forEach((cb) => cb());
-	} else if (status.value === ConnectionStatus.Disconnected) {
-		disconnectSubscribers.forEach((cb) => cb());
-	}
+subscribe('ConnectionClosed', () => {
+	status.value = ConnectionStatus.Disconnected;
+});
+
+// Don't use `subscribe` because this is simply about logging, but it's specific to errors
+socket.on('error', (data: any) => {
+	logMessage('ERROR', data);
 });
 
 /**
@@ -57,47 +40,29 @@ watch(status, (newStatus) => {
 export function useWebsocket() {
 	connect();
 
-	return { status, request, subscribe, connect, disconnect, onConnected, onDisconnected };
+	return {
+		status,
+		request,
+		subscribe,
+		connect,
+		disconnect: socket.disconnect,
+		onConnected,
+	};
 }
 
 /**
  * Connect to StreamLabs
  */
-function connect() {
+async function connect() {
 	if (status.value !== ConnectionStatus.Disconnected) return;
 
 	status.value = ConnectionStatus.Pending;
-	socket = new SockJS(url);
 
-	socket.onopen = () => {
-		status.value = ConnectionStatus.Opened;
-
-		// send token for auth
-		request('TcpServerService', 'auth', token)
-			.then(function onConnectionHandler() {
-				status.value = ConnectionStatus.Connected;
-			})
-			.catch((e: { message: any }) => {
-				alert(e.message);
-			});
-	};
-
-	socket.onmessage = (e) => {
-		onMessageHandler(e.data);
-		logMessage(e.data.toString(), 'response');
-	};
-
-	socket.onclose = (e) => {
-		status.value = ConnectionStatus.Disconnected;
-	};
-}
-
-/**
- * Disconnect from StreamLabs
- */
-function disconnect() {
-	socket.close();
-	status.value = ConnectionStatus.Disconnected;
+	try {
+		await socket.connect({ address: url, password });
+	} catch (error) {
+		alert('Could Not Connect');
+	}
 }
 
 /**
@@ -105,90 +70,48 @@ function disconnect() {
  */
 function onConnected(cb: () => void, activateOnce: boolean = false): void {
 	if (activateOnce) {
-		const stop = watchEffect(() => {
-			if (status.value === ConnectionStatus.Connected) {
-				cb();
-				setTimeout(stop, 0);
-			}
-		});
+		if (status.value == ConnectionStatus.Connected) {
+			cb();
+		} else {
+			subscribe('ConnectionOpened', cb, true);
+		}
 	} else {
-		if (status.value === ConnectionStatus.Connected) cb();
-		connectSubscribers.add(cb);
+		subscribe('ConnectionOpened', cb);
 	}
-}
-
-/**
- * Helper for running code once the connection is disconnected
- */
-function onDisconnected(cb: () => void, activateOnce: boolean = false): void {
-	if (activateOnce) {
-		const stop = watch(status, () => {
-			if (status.value === ConnectionStatus.Disconnected) {
-				cb();
-				setTimeout(stop, 0);
-			}
-		});
-	}
-	disconnectSubscribers.add(cb);
 }
 
 /**
  * Send a request to StreamLabs to either force an action or to get information
  */
-function request(resourceId: string, methodName: string, ...args: any[]): Promise<any> {
-	const requestBody: RequestBody = {
-		jsonrpc: '2.0',
-		id: nextRequestId++,
-		method: methodName,
-		params: { resource: resourceId, args },
-	};
+async function request(method: any, ...args: [any] | [undefined?]) {
+	logMessage('request', { args, method });
+	const response = await socket.send(method, ...args);
+	logMessage('response', { request: { args, method }, response });
 
-	logMessage(requestBody, 'request');
-
-	return new Promise((resolve, reject) => {
-		requests[requestBody.id] = {
-			body: requestBody,
-			resolve,
-			reject,
-		};
-
-		socket.send(JSON.stringify(requestBody));
-	});
+	return response;
 }
 
 /**
- * Handle any responses from StreamLabs. Will resolve any requests with the response and make a call to any
+ * Handle any events from StreamLabs. Will resolve any requests with the response and make a call to any
  * subscriptions subscribed to the response type.
  */
-function onMessageHandler(data: any) {
-	const message = JSON.parse(data);
-	const request = requests[message.id];
-
-	if (request) {
-		if (message.error) {
-			request.reject(message.error);
-		} else {
-			request.resolve(message.result);
-		}
-		delete requests[message.id];
+function subscribe(
+	eventName: Parameters<typeof socket.on>[0],
+	callback: Parameters<typeof socket.on>[1],
+	once: boolean = false
+) {
+	if (once) {
+		socket.once(eventName, callback);
+	} else {
+		socket.on(eventName, callback);
 	}
 
-	const result = message.result;
-	if (!result) return;
+	if (!eventsSubscribedTo.includes(eventName)) {
+		eventsSubscribedTo.push(eventName);
 
-	if (result._type === 'EVENT' && result.emitter === 'STREAM' && subscriptions[message.result.resourceId].length) {
-		subscriptions[message.result.resourceId].forEach((cb: Function) => cb(result.data));
+		// Auto-log any events we listen for in this app
+		socket.on(eventName, (...args) => {
+			logMessage('event', { eventName, payload: args });
+		});
 	}
-}
-
-/**
- * Subscribe a callback to handle any messages from StreamLabs of a specified type
- */
-
-/* TODO: create enums for resourceID and channelName */
-async function subscribe(resourceId: string, channelName: string, cb: Function) {
-	request(resourceId, channelName).then((subscriptionInfo) => {
-		subscriptions[subscriptionInfo.resourceId] = subscriptions[subscriptionInfo.resourceId] || [];
-		subscriptions[subscriptionInfo.resourceId].push(cb);
-	});
 }

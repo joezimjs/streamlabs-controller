@@ -20,9 +20,6 @@ export default defineComponent({
 		let store = useScenes();
 
 		return {
-			// scenes: toRef(sceneStore, 'scenes'),
-			// selectScene: sceneStore.selectScene,
-			// isActiveScene: sceneStore.isActiveScene,
 			store,
 		};
 	},
