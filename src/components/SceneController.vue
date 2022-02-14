@@ -1,11 +1,11 @@
 <template>
 	<ControlButton
 		v-for="scene in store.scenes"
-		:key="scene.id"
+		:key="scene"
 		:is-active="store.isActiveScene(scene)"
 		@click="store.selectScene(scene)"
 	>
-		{{ scene.name }}
+		{{ scene }}
 	</ControlButton>
 </template>
 
@@ -19,12 +19,7 @@ export default defineComponent({
 	setup() {
 		let store = useScenes();
 
-		return {
-			// scenes: toRef(sceneStore, 'scenes'),
-			// selectScene: sceneStore.selectScene,
-			// isActiveScene: sceneStore.isActiveScene,
-			store,
-		};
+		return { store };
 	},
 });
 </script>

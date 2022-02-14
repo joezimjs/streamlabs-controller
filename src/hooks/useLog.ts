@@ -7,15 +7,7 @@ type Message = {
 
 export const messages: Ref<Array<Message>> = ref([]);
 
-export function logMessage(data: any, type: string): void {
-	if (typeof data === 'string') {
-		try {
-			data = JSON.parse(data);
-		} catch (e) {
-			/* DO NOTHING */
-		}
-	}
-
+export function logMessage(type: string, ...data: any[]): void {
 	console.debug(`${type}:`, data);
 	messages.value.push({ type, data });
 }

@@ -1,13 +1,15 @@
 import { defineStore } from 'pinia';
 import { useWebsocket } from '../hooks/useWebsocket';
 
-const { request, onConnected, onDisconnected, subscribe } = useWebsocket();
+const { request, onConnected, subscribe } = useWebsocket();
 
-interface Scene {
-	id: string;
+interface SceneListResponse {
+	currentScene: string;
+	scenes: SceneListResponseScene[];
+}
+
+interface SceneListResponseScene {
 	name: string;
-	resourceId: string;
-	nodes: object[];
 }
 
 const nullScene = { id: '', name: '', resourceId: '', nodes: [] };
@@ -16,44 +18,45 @@ export const useScenes = defineStore({
 	id: 'scenes',
 
 	__initialize: (store) => {
-		onConnected(async () => {
-			store.scenes = await request('ScenesService', 'getScenes');
-			store.activeScene = await request('ScenesService', 'activeScene');
+		async function getSceneList() {
+			const sceneResponse: SceneListResponse = await request('GetSceneList');
 
-			subscribe('ScenesService', 'sceneSwitched', (newScene: Scene) => {
-				store.activeScene = store.scenes.find((scene: Scene) => scene.id === newScene.id) || nullScene;
-			});
+			store.scenes = sceneResponse.scenes.map((scene) => scene.name);
+			store.activeScene = sceneResponse.currentScene;
+		}
 
-			subscribe('ScenesService', 'sceneAdded', (scene: Scene) => {
-				store.scenes.push(scene);
-			});
+		onConnected(getSceneList);
 
-			subscribe('ScenesService', 'sceneRemoved', (removedScene: Scene) => {
-				store.scenes.splice(
-					store.scenes.findIndex((scene: Scene) => scene.id == removedScene.id),
-					1
-				);
-			});
+		subscribe('SwitchScenes', (newScene) => {
+			if (newScene && 'scene-name' in newScene) {
+				store.activeScene = newScene['scene-name'];
+			}
 		});
 
-		onDisconnected(() => {
+		subscribe('ScenesChanged', (data) => {
+			if (data && 'scenes' in data) {
+				store.scenes = data.scenes.map((scene) => scene.name);
+			}
+		});
+
+		subscribe('ConnectionClosed', () => {
 			store.scenes = [];
 			store.activeScene = nullScene;
 		});
 	},
 
 	state: () => ({
-		scenes: [] as Scene[],
-		activeScene: nullScene as Scene,
-		isInitialized: false as boolean,
+		scenes: [] as string[],
+		activeScene: '',
+		isInitialized: false,
 	}),
 
 	actions: {
-		isActiveScene(scene: Scene) {
-			return scene.id === this.activeScene.id;
+		isActiveScene(scene: string) {
+			return scene === this.activeScene;
 		},
-		selectScene(scene: Scene) {
-			request(scene.resourceId, 'makeActive');
+		selectScene(scene: string) {
+			request('SetCurrentScene', { 'scene-name': scene });
 		},
 	},
 });

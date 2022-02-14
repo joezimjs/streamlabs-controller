@@ -1,12 +1,12 @@
 <template>
 	<ControlButton
 		v-for="source in store.audioSources"
-		:key="source.sourceId"
+		:key="source.name"
 		:is-active="!source.muted"
-		@click="store.setMuted(source, !source.muted)"
+		@click="store.toggleMute(source)"
 	>
-		<AudioInputIcon v-if="store.getAudioType(source) === 'input'" :class="$style.icon" />
-		<AudioOutputIcon v-if="store.getAudioType(source) === 'output'" :class="$style.icon" />
+		<AudioInputIcon v-if="source.audioType === 'input'" :class="$style.icon" />
+		<AudioOutputIcon v-if="source.audioType === 'output'" :class="$style.icon" />
 		{{ source.name }}
 	</ControlButton>
 </template>

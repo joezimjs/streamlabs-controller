@@ -5,6 +5,7 @@
 			{{ connectionButtonTitle }}
 		</button>
 	</h1>
+
 	<template v-if="status == 'connected'">
 		<div><RecordButton /> <StreamButton /></div>
 		<div><AudioController /></div>
@@ -26,17 +27,28 @@ import StreamButton from '@/components/StreamButton.vue';
 
 export default defineComponent({
 	name: 'App',
-	components: { RecordButton, StreamButton, SceneController, SourceController, AudioController },
+	components: {
+		RecordButton,
+		StreamButton,
+		SceneController,
+		SourceController,
+		AudioController,
+	},
 	setup() {
-		let { messages } = useLog();
-		let { status, connect, disconnect } = useWebsocket();
+		const { messages } = useLog();
+		const { status, connect, disconnect, request, subscribe } = useWebsocket();
+		// @ts-ignore
+		window.socket = { status, connect, disconnect, request, subscribe };
 
-		let connectionButtonTitle = computed(() => {
-			if (status.value === ConnectionStatus.Opened || status.value === ConnectionStatus.Pending) {
-				return 'Connecting';
-			} else if (status.value === ConnectionStatus.Disconnected) {
-				return 'Disconnected. Click to Connect.';
-			} else return 'Connected';
+		const connectionButtonTitle = computed(() => {
+			switch (status.value) {
+				case ConnectionStatus.Pending:
+					return 'Connecting';
+				case ConnectionStatus.Disconnected:
+					return 'Disconnected. Click to Connect.';
+				default:
+					return 'Connected';
+			}
 		});
 
 		function toggleConnection() {
