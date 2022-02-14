@@ -4,7 +4,6 @@ import { useLog } from './useLog';
 
 export enum ConnectionStatus {
 	Disconnected = 'disconnected',
-	Opened = 'opened',
 	Pending = 'pending',
 	Connected = 'connected',
 }
@@ -20,7 +19,7 @@ const password = 'Z1mm3rm4n!';
 
 const { logMessage } = useLog();
 
-subscribe('ConnectionOpened', () => {
+subscribe('AuthenticationSuccess', () => {
 	status.value = ConnectionStatus.Connected;
 });
 
@@ -45,7 +44,7 @@ export function useWebsocket() {
 		request,
 		subscribe,
 		connect,
-		disconnect: socket.disconnect,
+		disconnect: socket.disconnect.bind(socket),
 		onConnected,
 	};
 }
@@ -68,15 +67,14 @@ async function connect() {
 /**
  * Helper for running code once the connection is established, or immediately if already established
  */
-function onConnected(cb: () => void, activateOnce: boolean = false): void {
-	if (activateOnce) {
-		if (status.value == ConnectionStatus.Connected) {
-			cb();
-		} else {
-			subscribe('ConnectionOpened', cb, true);
+function onConnected(cb: () => void, activateOnce: boolean = false) {
+	if (status.value == ConnectionStatus.Connected) {
+		cb();
+		if (!activateOnce) {
+			subscribe('ConnectionOpened', cb);
 		}
 	} else {
-		subscribe('ConnectionOpened', cb);
+		subscribe('ConnectionOpened', cb, activateOnce);
 	}
 }
 
@@ -84,11 +82,15 @@ function onConnected(cb: () => void, activateOnce: boolean = false): void {
  * Send a request to StreamLabs to either force an action or to get information
  */
 async function request(method: any, ...args: [any] | [undefined?]) {
-	logMessage('request', { args, method });
-	const response = await socket.send(method, ...args);
-	logMessage('response', { request: { args, method }, response });
+	try {
+		logMessage('request', method, args);
+		const response = await socket.send(method, ...args);
+		logMessage('response', { request: { args, method }, response });
 
-	return response;
+		return response;
+	} catch (e) {
+		logMessage('ERROR', 'Failed request', method, e);
+	}
 }
 
 /**
@@ -111,7 +113,7 @@ function subscribe(
 
 		// Auto-log any events we listen for in this app
 		socket.on(eventName, (...args) => {
-			logMessage('event', { eventName, payload: args });
+			logMessage('event', eventName, args);
 		});
 	}
 }

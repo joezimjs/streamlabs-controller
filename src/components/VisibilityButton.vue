@@ -1,11 +1,11 @@
 <template>
-	<ControlButton :is-active="isVisible" @click="toggleVisibility">
+	<ControlButton :is-active="source.render" @click="toggleVisibility">
 		<EyeIcon :class="$style.icon" />
 	</ControlButton>
 </template>
 
 <script lang="ts">
-import { defineComponent, computed, PropType } from 'vue';
+import { defineComponent, PropType } from 'vue';
 import { useSources, Source } from '@/stores/sources';
 import ControlButton from '@/components/ControlButton.vue';
 import EyeIcon from '@/components/EyeIcon.vue';
@@ -21,15 +21,11 @@ export default defineComponent({
 	setup(props) {
 		let store = useSources();
 
-		let isVisible = computed(() => {
-			return store.sourceIsVisible(props.source, 'visible');
-		});
-
 		function toggleVisibility() {
-			store.setVisibility(props.source, !isVisible.value, 'visible');
+			store.toggleVisibility(props.source);
 		}
 
-		return { isVisible, toggleVisibility };
+		return { toggleVisibility };
 	},
 });
 </script>

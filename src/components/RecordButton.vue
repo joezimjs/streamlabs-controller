@@ -9,32 +9,36 @@ import { defineComponent, ref, Ref, computed } from 'vue';
 import ControlButton from '@/components/ControlButton.vue';
 import { useWebsocket, ConnectionStatus } from '@/hooks/useWebsocket';
 
-type RecordingStatus = 'recording' | 'stopping' | 'offline';
-
 export default defineComponent({
 	components: { ControlButton },
 	setup() {
 		let { onConnected, subscribe, request, status } = useWebsocket();
-		let recordingStatus: Ref<RecordingStatus> = ref('offline');
-		let isRecording: Ref<boolean> = computed(() => recordingStatus.value === 'recording');
+		let isRecording: Ref<boolean> = ref(false);
 		let disabled: Ref<boolean> = computed(() => status.value !== ConnectionStatus.Connected);
 
-		onConnected(() => {
-			// console.log('RECORD BUTTON ON CONNECT');
-			subscribe(
-				'StreamingService',
-				'recordingStatusChange',
-				(status: RecordingStatus) => (recordingStatus.value = status)
-			);
+		function setIsRecording(bool: boolean) {
+			return () => (isRecording.value = bool);
+		}
+
+		subscribe('RecordingStarting', setIsRecording(true));
+		subscribe('RecordingStarted', setIsRecording(true));
+		subscribe('RecordingResumed', setIsRecording(true));
+		subscribe('RecordingStopping', setIsRecording(false));
+		subscribe('RecordingStopped', setIsRecording(false));
+		subscribe('RecordingPaused', setIsRecording(false));
+
+		onConnected(async () => {
+			const status = await request('GetRecordingStatus');
+			isRecording.value = status.isRecording || false;
 		}, true);
 
 		function toggleRecording() {
 			if (status.value === ConnectionStatus.Connected) {
-				request('StreamingService', 'toggleRecording');
+				request('StartStopRecording');
 			}
 		}
 
-		return { isRecording, recordingStatus, disabled, toggleRecording };
+		return { isRecording, disabled, toggleRecording };
 	},
 });
 </script>

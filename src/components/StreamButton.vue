@@ -9,32 +9,34 @@ import { defineComponent, ref, Ref, computed } from 'vue';
 import ControlButton from '@/components/ControlButton.vue';
 import { useWebsocket, ConnectionStatus } from '@/hooks/useWebsocket';
 
-type StreamingStatus = 'starting' | 'live' | 'ending' | 'offline';
-
 export default defineComponent({
 	components: { ControlButton },
 	setup() {
 		let { onConnected, subscribe, request, status } = useWebsocket();
-		let streamingStatus: Ref<StreamingStatus> = ref('offline');
-		let isStreaming: Ref<boolean> = computed(() => streamingStatus.value === 'live');
+		let isStreaming: Ref<boolean> = ref(false);
 		let disabled: Ref<boolean> = computed(() => status.value !== ConnectionStatus.Connected);
 
-		onConnected(() => {
-			// console.log('STREAM BUTTON ON CONNECT');
-			subscribe(
-				'StreamingService',
-				'streamingStatusChange',
-				(status: StreamingStatus) => (streamingStatus.value = status)
-			);
+		function setIsStreaming(bool: boolean) {
+			return () => (isStreaming.value = bool);
+		}
+
+		subscribe('StreamStarting', setIsStreaming(true));
+		subscribe('StreamStarted', setIsStreaming(true));
+		subscribe('StreamStopping', setIsStreaming(false));
+		subscribe('StreamStopped', setIsStreaming(false));
+
+		onConnected(async () => {
+			const status = await request('GetStreamingStatus');
+			isStreaming.value = status.streaming || false;
 		}, true);
 
 		function toggleStreaming() {
 			if (status.value === ConnectionStatus.Connected) {
-				request('StreamingService', 'toggleStreaming');
+				request('StartStopStreaming');
 			}
 		}
 
-		return { isStreaming, streamingStatus, disabled, toggleStreaming };
+		return { isStreaming, disabled, toggleStreaming };
 	},
 });
 </script>
