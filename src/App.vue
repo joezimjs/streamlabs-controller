@@ -8,9 +8,7 @@
 
 	<template v-if="status == 'connected'">
 		<div><RecordButton /> <StreamButton /></div>
-		<!--
 		<div><AudioController /></div>
-		-->
 		<div><SceneController /></div>
 		<div><SourceController /></div>
 	</template>
@@ -23,7 +21,7 @@ import { useLog } from './hooks/useLog';
 import { useWebsocket, ConnectionStatus } from './hooks/useWebsocket';
 import SceneController from '@/components/SceneController.vue';
 import SourceController from '@/components/SourceController.vue';
-// import AudioController from '@/components/AudioController.vue';
+import AudioController from '@/components/AudioController.vue';
 import RecordButton from '@/components/RecordButton.vue';
 import StreamButton from '@/components/StreamButton.vue';
 
@@ -34,7 +32,7 @@ export default defineComponent({
 		StreamButton,
 		SceneController,
 		SourceController,
-		// AudioController
+		AudioController,
 	},
 	setup() {
 		const { messages } = useLog();
