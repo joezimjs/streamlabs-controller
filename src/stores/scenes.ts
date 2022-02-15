@@ -1,3 +1,4 @@
+import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import { useWebsocket } from '../hooks/useWebsocket';
 
@@ -12,51 +13,43 @@ interface SceneListResponseScene {
 	name: string;
 }
 
-const nullScene = { id: '', name: '', resourceId: '', nodes: [] };
+export const useScenes = defineStore('scenes', () => {
+	const scenes = ref<string[]>([]);
+	const activeScene = ref<string>('');
 
-export const useScenes = defineStore({
-	id: 'scenes',
+	async function getSceneList() {
+		const sceneResponse: SceneListResponse = await request('GetSceneList');
 
-	__initialize: (store) => {
-		async function getSceneList() {
-			const sceneResponse: SceneListResponse = await request('GetSceneList');
+		scenes.value = sceneResponse.scenes.map((scene) => scene.name);
+		activeScene.value = sceneResponse.currentScene;
+	}
 
-			store.scenes = sceneResponse.scenes.map((scene) => scene.name);
-			store.activeScene = sceneResponse.currentScene;
+	onConnected(getSceneList);
+
+	subscribe('SwitchScenes', (newScene) => {
+		if (newScene && 'scene-name' in newScene) {
+			activeScene.value = newScene['scene-name'];
 		}
+	});
 
-		onConnected(getSceneList);
+	subscribe('ScenesChanged', (data) => {
+		if (data && 'scenes' in data) {
+			scenes.value = data.scenes.map((scene) => scene.name);
+		}
+	});
 
-		subscribe('SwitchScenes', (newScene) => {
-			if (newScene && 'scene-name' in newScene) {
-				store.activeScene = newScene['scene-name'];
-			}
-		});
+	subscribe('ConnectionClosed', () => {
+		scenes.value = [];
+		activeScene.value = '';
+	});
 
-		subscribe('ScenesChanged', (data) => {
-			if (data && 'scenes' in data) {
-				store.scenes = data.scenes.map((scene) => scene.name);
-			}
-		});
+	function isActiveScene(scene: string) {
+		return scene === activeScene.value;
+	}
 
-		subscribe('ConnectionClosed', () => {
-			store.scenes = [];
-			store.activeScene = nullScene;
-		});
-	},
+	function selectScene(scene: string) {
+		request('SetCurrentScene', { 'scene-name': scene });
+	}
 
-	state: () => ({
-		scenes: [] as string[],
-		activeScene: '',
-		isInitialized: false,
-	}),
-
-	actions: {
-		isActiveScene(scene: string) {
-			return scene === this.activeScene;
-		},
-		selectScene(scene: string) {
-			request('SetCurrentScene', { 'scene-name': scene });
-		},
-	},
+	return { scenes, activeScene, isActiveScene, selectScene };
 });

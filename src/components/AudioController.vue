@@ -17,7 +17,7 @@ import ControlButton from '@/components/ControlButton.vue';
 import AudioInputIcon from '@/components/AudioInputIcon.vue';
 import AudioOutputIcon from '@/components/AudioOutputIcon.vue';
 
-let store = useAudioSources();
+const store = useAudioSources();
 </script>
 
 <style lang="scss" module>

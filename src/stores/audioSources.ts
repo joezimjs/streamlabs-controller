@@ -1,3 +1,4 @@
+import { ref } from 'vue';
 import { defineStore } from 'pinia';
 import { useWebsocket } from '@/hooks/useWebsocket';
 
@@ -29,45 +30,32 @@ const typeIdtoAudioTypeMap = {
 	wasapi_output_capture: 'output' as AudioType,
 };
 
-export const useAudioSources = defineStore({
-	id: 'audioSources',
+export const useAudioSources = defineStore('audioSources', () => {
+	const audioSources = ref<AppAudioSource[]>([]);
 
-	/**
-	 * INITIALIZE STORE
-	 */
-	__initialize(store) {
-		onConnected(async () => {
-			const response = await request('GetSourcesList');
-			store.audioSources = response.sources.filter((source: AudioSource) =>
-				acceptableSourceTypes.includes(source.typeId)
-			);
+	onConnected(async () => {
+		const response = await request('GetSourcesList');
+		audioSources.value =
+			response.sources.filter((source: AudioSource) => acceptableSourceTypes.includes(source.typeId)) || [];
 
-			store.audioSources.forEach(async (source: AppAudioSource) => {
-				source.muted = (await request('GetMute', { source: source.name })).muted || false;
-				source.audioType = typeIdtoAudioTypeMap[source.typeId];
-			});
+		audioSources.value.forEach(async (source: AppAudioSource) => {
+			source.muted = (await request('GetMute', { source: source.name })).muted || false;
+			source.audioType = typeIdtoAudioTypeMap[source.typeId];
 		});
+	});
 
-		subscribe('SourceMuteStateChanged', (update) => {
-			const sourceUpdate: SourceMuteStateChangeEventPayload = update as SourceMuteStateChangeEventPayload;
-			store.audioSources.find((source: AppAudioSource) => source.name === sourceUpdate.sourceName).muted =
-				sourceUpdate.muted;
-		});
-	},
+	subscribe('SourceMuteStateChanged', (update) => {
+		const sourceUpdate: SourceMuteStateChangeEventPayload = update as SourceMuteStateChangeEventPayload;
+		const source = audioSources.value.find((source: AppAudioSource) => source.name === sourceUpdate.sourceName);
 
-	/**
-	 * STATE
-	 */
-	state: () => ({
-		audioSources: [] as AppAudioSource[],
-	}),
+		if (source) {
+			source.muted = sourceUpdate.muted;
+		}
+	});
 
-	/**
-	 * ACTIONS
-	 */
-	actions: {
-		async toggleMute(source: AppAudioSource) {
-			await request('SetMute', { source: source.name, mute: !source.muted });
-		},
-	},
+	async function toggleMute(source: AppAudioSource) {
+		await request('SetMute', { source: source.name, mute: !source.muted });
+	}
+
+	return { audioSources, toggleMute };
 });

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { useWebsocket } from '@/hooks/useWebsocket';
 import { useScenes } from '@/stores/scenes';
-import { watch } from 'vue';
+import { ref, watch } from 'vue';
 
 const { request, subscribe } = useWebsocket();
 
@@ -24,49 +24,33 @@ export interface Source {
 	parentGroupName?: string;
 }
 
-export const useSources = defineStore({
-	id: 'sources',
+export const useSources = defineStore('sources', () => {
+	const sceneStore = useScenes();
+	const sources = ref<Source[]>([]);
 
-	/**
-	 * INITIALIZE STORE
-	 */
-	__initialize(store) {
-		const sceneStore = useScenes();
+	async function getSources() {
+		const response = await request('GetCurrentScene');
+		sources.value = response.sources;
+	}
 
-		async function getSources() {
-			const response = await request('GetCurrentScene');
-			store.sources = response.sources;
-		}
-
-		watch(
-			() => sceneStore.activeScene,
-			async () => {
-				if (sceneStore.activeScene) {
-					getSources();
-				}
-			},
-			{ immediate: true }
-		);
-
-		subscribe('SourceOrderChanged', getSources);
-		subscribe('SceneItemAdded', getSources);
-		subscribe('SceneItemRemoved', getSources);
-		subscribe('SceneItemVisibilityChanged', getSources);
-	},
-
-	/**
-	 * STATE
-	 */
-	state: () => ({
-		sources: [] as Source[],
-	}),
-
-	/**
-	 * ACTIONS
-	 */
-	actions: {
-		async toggleVisibility(source: Source) {
-			request('SetSceneItemRender', { source: source.name, render: !source.render });
+	watch(
+		() => sceneStore.activeScene,
+		async () => {
+			if (sceneStore.activeScene) {
+				getSources();
+			}
 		},
-	},
+		{ immediate: true }
+	);
+
+	subscribe('SourceOrderChanged', getSources);
+	subscribe('SceneItemAdded', getSources);
+	subscribe('SceneItemRemoved', getSources);
+	subscribe('SceneItemVisibilityChanged', getSources);
+
+	async function toggleVisibility(source: Source) {
+		request('SetSceneItemRender', { source: source.name, render: !source.render });
+	}
+
+	return { sources, toggleVisibility };
 });

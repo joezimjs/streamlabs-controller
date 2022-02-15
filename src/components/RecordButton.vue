@@ -5,13 +5,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, computed } from 'vue';
+import { ref, computed } from 'vue';
 import ControlButton from '@/components/ControlButton.vue';
 import { useWebsocket, ConnectionStatus } from '@/hooks/useWebsocket';
 
-let { onConnected, subscribe, request, status } = useWebsocket();
-let isRecording: Ref<boolean> = ref(false);
-let disabled: Ref<boolean> = computed(() => status.value !== ConnectionStatus.Connected);
+const { onConnected, subscribe, request, status } = useWebsocket();
+const isRecording = ref<boolean>(false);
+const disabled = computed<boolean>(() => status.value !== ConnectionStatus.Connected);
 
 function setIsRecording(bool: boolean) {
 	return () => (isRecording.value = bool);
