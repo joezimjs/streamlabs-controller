@@ -4,33 +4,26 @@
 	</ControlButton>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { PropType } from 'vue';
 import { useSources, Source } from '@/stores/sources';
 import ControlButton from '@/components/ControlButton.vue';
 import RecordIcon from '@/components/RecordIcon.vue';
 import StreamIcon from '@/components/StreamIcon.vue';
 import PlusIcon from '@/components/PlusIcon.vue';
 
-export default defineComponent({
-	components: { ControlButton, RecordIcon, StreamIcon, PlusIcon },
-	props: {
-		source: {
-			type: Object as PropType<Source>,
-			required: true,
-		},
-	},
-	setup(props) {
-		let store = useSources();
+const store = useSources();
 
-		function toggleVisibility() {
-			store.setVisibility(props.source, true, 'recordingVisible');
-			store.setVisibility(props.source, true, 'streamVisible');
-		}
-
-		return { toggleVisibility };
+const props = defineProps({
+	source: {
+		type: Object as PropType<Source>,
+		required: true,
 	},
 });
+
+function toggleVisibility() {
+	store.toggleVisibility(props.source);
+}
 </script>
 
 <style lang="scss" module>

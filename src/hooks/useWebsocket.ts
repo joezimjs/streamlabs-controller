@@ -67,7 +67,7 @@ async function connect() {
 /**
  * Helper for running code once the connection is established, or immediately if already established
  */
-function onConnected(cb: () => void, activateOnce: boolean = false) {
+function onConnected(cb: () => void, activateOnce = false) {
 	if (status.value == ConnectionStatus.Connected) {
 		cb();
 		if (!activateOnce) {
@@ -100,7 +100,7 @@ async function request(method: any, ...args: [any] | [undefined?]) {
 function subscribe(
 	eventName: Parameters<typeof socket.on>[0],
 	callback: Parameters<typeof socket.on>[1],
-	once: boolean = false
+	once = false
 ) {
 	if (once) {
 		socket.once(eventName, callback);

@@ -7,16 +7,25 @@
 	</h1>
 
 	<template v-if="status == 'connected'">
-		<div><RecordButton /> <StreamButton /></div>
-		<div><AudioController /></div>
-		<div><SceneController /></div>
-		<div><SourceController /></div>
+		<div>
+			<RecordButton />
+			<StreamButton />
+		</div>
+		<div>
+			<AudioController />
+		</div>
+		<div>
+			<SceneController />
+		</div>
+		<div>
+			<SourceController />
+		</div>
 	</template>
 	<h2 v-else>Disconnected. Please connect to StreamLabs to get started</h2>
 </template>
 
-<script lang="ts">
-import { defineComponent, computed } from 'vue';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { useLog } from './hooks/useLog';
 import { useWebsocket, ConnectionStatus } from './hooks/useWebsocket';
 import SceneController from '@/components/SceneController.vue';
@@ -25,40 +34,26 @@ import AudioController from '@/components/AudioController.vue';
 import RecordButton from '@/components/RecordButton.vue';
 import StreamButton from '@/components/StreamButton.vue';
 
-export default defineComponent({
-	name: 'App',
-	components: {
-		RecordButton,
-		StreamButton,
-		SceneController,
-		SourceController,
-		AudioController,
-	},
-	setup() {
-		const { messages } = useLog();
-		const { status, connect, disconnect, request, subscribe } = useWebsocket();
-		// @ts-ignore
-		window.socket = { status, connect, disconnect, request, subscribe };
+useLog();
+const { status, connect, disconnect /*request, subscribe*/ } = useWebsocket();
+// @ts-ignore
+// window.socket = { status, connect, disconnect, request, subscribe };
 
-		const connectionButtonTitle = computed(() => {
-			switch (status.value) {
-				case ConnectionStatus.Pending:
-					return 'Connecting';
-				case ConnectionStatus.Disconnected:
-					return 'Disconnected. Click to Connect.';
-				default:
-					return 'Connected';
-			}
-		});
-
-		function toggleConnection() {
-			if (status.value === ConnectionStatus.Connected) disconnect();
-			else if (status.value === ConnectionStatus.Disconnected) connect();
-		}
-
-		return { messages, status, connectionButtonTitle, toggleConnection };
-	},
+const connectionButtonTitle = computed(() => {
+	switch (status.value) {
+		case ConnectionStatus.Pending:
+			return 'Connecting';
+		case ConnectionStatus.Disconnected:
+			return 'Disconnected. Click to Connect.';
+		default:
+			return 'Connected';
+	}
 });
+
+function toggleConnection() {
+	if (status.value === ConnectionStatus.Connected) disconnect();
+	else if (status.value === ConnectionStatus.Disconnected) connect();
+}
 </script>
 
 <style lang="scss">

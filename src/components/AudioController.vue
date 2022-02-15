@@ -11,21 +11,13 @@
 	</ControlButton>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
 import { useAudioSources } from '@/stores/audioSources';
 import ControlButton from '@/components/ControlButton.vue';
 import AudioInputIcon from '@/components/AudioInputIcon.vue';
 import AudioOutputIcon from '@/components/AudioOutputIcon.vue';
 
-export default defineComponent({
-	components: { ControlButton, AudioInputIcon, AudioOutputIcon },
-	setup() {
-		let store = useAudioSources();
-
-		return { store };
-	},
-});
+let store = useAudioSources();
 </script>
 
 <style lang="scss" module>

@@ -1,37 +1,26 @@
 <template>
-	<ControlButton :is-active="isVisible" @click="toggleVisibility">
+	<ControlButton :is-active="source.render" @click="toggleVisibility">
 		<RecordIcon :class="$style.icon" />
 	</ControlButton>
 </template>
 
-<script lang="ts">
-import { defineComponent, computed, PropType } from 'vue';
+<script setup lang="ts">
+import { PropType } from 'vue';
 import { useSources, Source } from '@/stores/sources';
 import ControlButton from '@/components/ControlButton.vue';
 import RecordIcon from '@/components/RecordIcon.vue';
 
-export default defineComponent({
-	components: { ControlButton, RecordIcon },
-	props: {
-		source: {
-			type: Object as PropType<Source>,
-			required: true,
-		},
-	},
-	setup(props) {
-		let store = useSources();
-
-		let isVisible = computed(() => {
-			return store.sourceIsVisible(props.source, 'recordingVisible');
-		});
-
-		function toggleVisibility() {
-			store.setVisibility(props.source, !isVisible.value, 'recordingVisible');
-		}
-
-		return { isVisible, toggleVisibility };
+const props = defineProps({
+	source: {
+		type: Object as PropType<Source>,
+		required: true,
 	},
 });
+const store = useSources();
+
+function toggleVisibility() {
+	store.toggleVisibility(props.source);
+}
 </script>
 
 <style lang="scss" module>

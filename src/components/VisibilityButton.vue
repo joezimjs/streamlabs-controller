@@ -4,30 +4,23 @@
 	</ControlButton>
 </template>
 
-<script lang="ts">
-import { defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { PropType } from 'vue';
 import { useSources, Source } from '@/stores/sources';
 import ControlButton from '@/components/ControlButton.vue';
 import EyeIcon from '@/components/EyeIcon.vue';
 
-export default defineComponent({
-	components: { ControlButton, EyeIcon },
-	props: {
-		source: {
-			type: Object as PropType<Source>,
-			required: true,
-		},
-	},
-	setup(props) {
-		let store = useSources();
-
-		function toggleVisibility() {
-			store.toggleVisibility(props.source);
-		}
-
-		return { toggleVisibility };
+const props = defineProps({
+	source: {
+		type: Object as PropType<Source>,
+		required: true,
 	},
 });
+const store = useSources();
+
+function toggleVisibility() {
+	store.toggleVisibility(props.source);
+}
 </script>
 
 <style lang="scss" module>

@@ -1,6 +1,9 @@
 <template>
 	<div v-for="source in sourceList" :key="source.id">
-		<span :class="$style.sourceName"> <FolderIcon v-if="source.type === 'group'" /> {{ source.name }}: </span>
+		<span :class="$style.sourceName">
+			<FolderIcon v-if="source.type === 'group'" />
+			{{ source.name }}:
+		</span>
 		<VisibilityButton :source="source" />
 
 		<div v-if="source.type === 'group'" :class="$style.childContainer">
@@ -9,27 +12,17 @@
 	</div>
 </template>
 
-<script lang="ts">
-import { computed, defineComponent, PropType } from 'vue';
+<script setup lang="ts">
+import { computed, PropType } from 'vue';
 import VisibilityButton from '@/components/VisibilityButton.vue';
 import { Source, useSources } from '@/stores/sources';
 import FolderIcon from '@/components/FolderIcon.vue';
 
-export default defineComponent({
-	components: {
-		FolderIcon,
-		VisibilityButton,
-	},
-	props: {
-		sources: { type: Array as PropType<Source[]>, default: null },
-	},
-	setup(props) {
-		const store = useSources();
-		const sourceList = computed(() => (props.sources ? props.sources : store.sources));
-
-		return { store, sourceList };
-	},
+const props = defineProps({
+	sources: { type: Array as PropType<Source[]>, default: null },
 });
+const store = useSources();
+const sourceList = computed(() => (props.sources ? props.sources : store.sources));
 </script>
 
 <style lang="scss" module>
