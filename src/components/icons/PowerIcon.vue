@@ -10,7 +10,7 @@
 		stroke-linejoin="round"
 		class="css-i6dzq1"
 	>
-		<polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-		<path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+		<path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+		<line x1="12" y1="2" x2="12" y2="12"></line>
 	</svg>
 </template>

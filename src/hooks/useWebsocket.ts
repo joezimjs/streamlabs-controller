@@ -71,10 +71,10 @@ function onConnected(cb: () => void, activateOnce = false) {
 	if (status.value == ConnectionStatus.Connected) {
 		cb();
 		if (!activateOnce) {
-			subscribe('ConnectionOpened', cb);
+			subscribe('AuthenticationSuccess', cb);
 		}
 	} else {
-		subscribe('ConnectionOpened', cb, activateOnce);
+		subscribe('AuthenticationSuccess', cb, activateOnce);
 	}
 }
 

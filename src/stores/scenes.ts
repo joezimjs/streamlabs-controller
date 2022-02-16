@@ -24,7 +24,7 @@ export const useScenes = defineStore('scenes', () => {
 		activeScene.value = sceneResponse.currentScene;
 	}
 
-	onConnected(getSceneList);
+	onConnected(() => getSceneList());
 
 	subscribe('SwitchScenes', (newScene) => {
 		if (newScene && 'scene-name' in newScene) {

@@ -1,0 +1,31 @@
+{
+	"root": true,
+	"env": {
+		"vue/setup-compiler-macros": true,
+		"node": true
+	},
+	"extends": [
+		"plugin:vue/vue3-essential",
+		"eslint:recommended",
+		"@vue/typescript/recommended",
+		"plugin:prettier/recommended"
+	],
+	"parser": "vue-eslint-parser",
+	"parserOptions": {
+		"sourceType": "module",
+		"ecmaVersion": 2020
+	},
+	"rules": {
+		"@typescript-eslint/ban-ts-comment": 0,
+		"@typescript-eslint/no-explicit-any": 0,
+		"max-len": 0
+	},
+	"overrides": [
+		{
+			"files": ["**/__tests__/*.{j,t}s?(x)", "**/tests/unit/**/*.spec.{j,t}s?(x)"],
+			"env": {
+				"jest": true
+			}
+		}
+	]
+}
