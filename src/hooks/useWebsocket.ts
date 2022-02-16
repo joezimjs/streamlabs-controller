@@ -34,7 +34,7 @@ socket.on('error', (data: any) => {
 
 /**
  * Main way of bringing functionality into components. Will automatically attempt to connect the first time it's used.
- * Returns the public API for communicating with StreamLabs.
+ * Returns the public API for communicating with OBS.
  */
 export function useWebsocket() {
 	connect();
@@ -50,7 +50,7 @@ export function useWebsocket() {
 }
 
 /**
- * Connect to StreamLabs
+ * Connect to OBS
  */
 async function connect() {
 	if (status.value !== ConnectionStatus.Disconnected) return;
@@ -79,7 +79,7 @@ function onConnected(cb: () => void, activateOnce = false) {
 }
 
 /**
- * Send a request to StreamLabs to either force an action or to get information
+ * Send a request to OBS to either force an action or to get information
  */
 async function request(method: any, ...args: [any] | [undefined?]) {
 	try {
@@ -94,7 +94,7 @@ async function request(method: any, ...args: [any] | [undefined?]) {
 }
 
 /**
- * Handle any events from StreamLabs. Will resolve any requests with the response and make a call to any
+ * Handle any events from OBS. Will resolve any requests with the response and make a call to any
  * subscriptions subscribed to the response type.
  */
 function subscribe(

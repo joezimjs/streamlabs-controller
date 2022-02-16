@@ -56,7 +56,7 @@ function toggleConnection() {
 				<AudioController />
 			</div>
 		</template>
-		<h2 v-else>Disconnected. Please connect to StreamLabs to get started</h2>
+		<h2 v-else>Disconnected. Please connect to OBS Studio to get started</h2>
 	</div>
 </template>
 
