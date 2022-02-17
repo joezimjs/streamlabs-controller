@@ -49,6 +49,7 @@ function toggleStreaming() {
 	background: transparent;
 	.icon {
 		color: #c00;
+		margin-right: 0.5rem;
 	}
 }
 </style>

@@ -15,12 +15,19 @@ type AudioType = 'input' | 'output';
 interface AppAudioSource extends AudioSource {
 	typeId: 'audio_capture' | 'wasapi_input_capture' | 'wasapi_output_capture';
 	muted?: boolean;
+	volume?: number;
 	audioType?: AudioType;
 }
 
 interface SourceMuteStateChangeEventPayload {
 	sourceName: string;
 	muted: boolean;
+}
+
+interface SourceVolumeStateChangeEventPayload {
+	sourceName: string;
+	volume: number;
+	volumeDb: number;
 }
 
 const acceptableSourceTypes = ['audio_capture', 'wasapi_input_capture', 'wasapi_output_capture'];
@@ -39,7 +46,9 @@ export const useAudioSources = defineStore('audioSources', () => {
 			response.sources.filter((source: AudioSource) => acceptableSourceTypes.includes(source.typeId)) || [];
 
 		audioSources.value.forEach(async (source: AppAudioSource) => {
-			source.muted = (await request('GetMute', { source: source.name })).muted || false;
+			const response = await request('GetVolume', { source: source.name, useDecibel: true });
+			source.muted = response.muted || false;
+			source.volume = response.volume || 0;
 			source.audioType = typeIdtoAudioTypeMap[source.typeId];
 		});
 	});
@@ -53,9 +62,36 @@ export const useAudioSources = defineStore('audioSources', () => {
 		}
 	});
 
+	subscribe('SourceVolumeChanged', (update) => {
+		const sourceUpdate: SourceVolumeStateChangeEventPayload = update as SourceVolumeStateChangeEventPayload;
+		const source = audioSources.value.find((source: AppAudioSource) => source.name === sourceUpdate.sourceName);
+
+		if (source) {
+			source.volume = sourceUpdate.volumeDb;
+		}
+	});
+
 	async function toggleMute(source: AppAudioSource) {
-		await request('SetMute', { source: source.name, mute: !source.muted });
+		return await request('SetMute', { source: source.name, mute: !source.muted });
 	}
 
-	return { audioSources, toggleMute };
+	function decreaseVolume(source: AppAudioSource) {
+		const volume = (source.volume || 0) - 5;
+		return setVolume(source, volume);
+	}
+
+	function increaseVolume(source: AppAudioSource) {
+		const volume = (source.volume || -5) + 5;
+		return setVolume(source, volume);
+	}
+
+	async function setVolume(source: AppAudioSource, volume: number) {
+		volume = Math.min(0, Math.max(-100, volume));
+
+		if (source.volume != volume) {
+			return await request('SetVolume', { source: source.name, volume, useDecibel: true });
+		}
+	}
+
+	return { audioSources, toggleMute, decreaseVolume, increaseVolume };
 });

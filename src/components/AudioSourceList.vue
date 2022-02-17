@@ -17,30 +17,33 @@ const store = useAudioSources();
 		<div :class="$style.label">
 			{{ source.name }}<br />
 			<div :class="$style.volumeBar">
-				<div :class="$style.volumeBarPercent" :style="{ width: '78%' }"></div>
+				<div :class="$style.volumeBarPercent" :style="{ width: (source.volume || 0) + 100 + '%' }"></div>
 			</div>
 		</div>
-		<AppButton :is-active="!source.muted" :class="$style.button">
+		<AppButton is-active :class="$style.button" @click="store.decreaseVolume(source)">
 			<VolumeIcon vol-direction="down" />
 		</AppButton>
-		<AppButton :is-active="!source.muted" :class="$style.button">
+		<AppButton is-active :class="$style.button" @click="store.increaseVolume(source)">
 			<VolumeIcon vol-direction="up" />
 		</AppButton>
 	</div>
 </template>
 
 <style lang="scss" module>
+.button {
+	margin: 0;
+}
 .sourceRow {
 	// background: #444;
 	height: 50px;
 	margin-bottom: 0.25rem;
 	display: flex;
 	align-items: center;
-	gap: 0.5rem;
-}
+	margin-left: -0.5rem;
 
-.button {
-	margin: 0;
+	> * {
+		margin-left: 0.5rem;
+	}
 }
 
 .label {

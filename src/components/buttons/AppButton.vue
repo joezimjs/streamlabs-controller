@@ -13,7 +13,6 @@ defineProps({
 <style lang="scss" module>
 .controlButton {
 	display: inline-flex;
-	gap: 0.5em;
 	padding: 0.75em 1em;
 	margin: 0.5em;
 	border: 1px solid rgba(255, 255, 255, 0.5);
@@ -24,6 +23,7 @@ defineProps({
 	cursor: pointer;
 	font: inherit;
 	font-size: 0.875rem;
+	align-items: center;
 
 	&:hover,
 	&:focus-visible {

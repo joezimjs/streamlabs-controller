@@ -3,14 +3,17 @@ import { computed } from 'vue';
 import { useLog } from './hooks/useLog';
 import { useWebsocket, ConnectionStatus } from './hooks/useWebsocket';
 import SceneList from '@/components/SceneList.vue';
-import SourceController from '@/components/SourceList.vue';
-import AudioController from '@/components/AudioController.vue';
+import SourceList from '@/components/SourceList.vue';
+import AudioSourceList from '@/components/AudioSourceList.vue';
 import RecordButton from '@/components/buttons/RecordButton.vue';
 import StreamButton from '@/components/buttons/StreamButton.vue';
 import PowerIcon from '@/components/icons/PowerIcon.vue';
+import CameraPositionControl from '@/components/CameraPositionControl.vue';
 
 useLog();
-const { status, connect, disconnect } = useWebsocket();
+const { status, connect, disconnect /* , request */ } = useWebsocket();
+
+// window.request = request;
 
 const connectionButtonTitle = computed(() => {
 	switch (status.value) {
@@ -49,26 +52,35 @@ function toggleConnection() {
 			</div>
 			<div>
 				<h2 :class="$style.columnHeader">Sources</h2>
-				<SourceController />
+				<SourceList />
 			</div>
 			<div>
 				<h2 :class="$style.columnHeader">Audio Sources</h2>
-				<AudioController />
+				<AudioSourceList />
+				<div :class="$style.cameraPositionContainer">
+					<h2 :class="$style.columnHeader">Camera Position</h2>
+					<CameraPositionControl />
+				</div>
 			</div>
 		</template>
-		<h2 v-else>Disconnected. Please connect to OBS Studio to get started</h2>
 	</div>
+	<div v-if="status == 'pending'" :class="$style.loadingSection">
+		<h2>CONNECTING</h2>
+		<div :class="$style.spinner">
+			<div :class="$style.spinnerBall"></div>
+		</div>
+	</div>
+	<h2 v-else-if="status == 'disconnected'">Disconnected. Please connect to OBS Studio to get started</h2>
 </template>
 
 <style lang="scss">
 body {
-	font-family: Avenir, Helvetica, Arial, sans-serif;
+	font-family: sans-serif;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
-	text-align: left;
 	background: #123;
 	color: #e5e5e5;
-	padding: 0 1em;
+	padding: 0 1rem;
 	margin: 0;
 	position: relative;
 }
@@ -85,17 +97,17 @@ body {
 	grid-column: 1 / span 3;
 	display: flex;
 	align-items: center;
-	gap: 1rem;
-	min-height: 4rem;
-	background: #111;
-	margin-inline: -1rem;
-	padding-inline: 1rem;
+	min-height: 3.75rem;
+	margin: 0 -1rem;
+
+	> * {
+		margin: 0 0 0 1rem;
+	}
 }
 
 .appHeading {
 	vertical-align: top;
 	font-size: 2rem;
-	margin: 0;
 }
 
 .statusIndicator {
@@ -144,5 +156,39 @@ body {
 .columnHeader {
 	margin: 0 0 1rem;
 	font-size: 1.25rem;
+}
+.cameraPositionContainer {
+	width: 50%;
+	margin: 1rem auto 0;
+	text-align: center;
+}
+
+.loadingSection {
+	text-align: center;
+
+	h2 {
+		margin-bottom: 3rem;
+	}
+}
+
+.spinner {
+	width: 50px;
+	height: 50px;
+	margin: 0 auto;
+	transform: none;
+	animation: spinner 0.375s infinite linear;
+
+	&Ball {
+		height: 10px;
+		width: 10px;
+		border-radius: 10px;
+		background: #fff;
+	}
+}
+
+@keyframes spinner {
+	to {
+		transform: rotateZ(360deg);
+	}
 }
 </style>

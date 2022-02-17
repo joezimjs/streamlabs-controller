@@ -8,12 +8,12 @@
 -  ✅ Update Pinia
    -  ✅ Use composition stores
    -  ✅ Remove plugin
--  Implement New Design
-   -  Audio Sources
-      -  Update list
-      -  Volume Control
-   -  Screen Switcher
-   -  Corner Switcher
-   -  Recording/Streaming Stats?
-   -  Settings Screen?
-   -  Smart Light Controls?
+-  ✅ Implement New Design
+-  ✅ Audio Sources
+   -  ✅ Update list
+   -  ✅ Volume Control
+-  ✅ Corner Switcher
+-  Screen Switcher
+-  Recording/Streaming Stats?
+-  Settings Screen?
+-  Smart Light Controls?
