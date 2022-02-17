@@ -163,7 +163,6 @@ body {
 .openedIndicator {
 	composes: statusIndicator;
 	color: rgb(211, 140, 9);
-	animation: pending 1s infinite alternate;
 }
 
 .disconnectedIndicator {
