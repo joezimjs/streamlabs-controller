@@ -14,6 +14,7 @@
    -  ✅ Volume Control
 -  ✅ Corner Switcher
 -  ✅ Screen Switcher
--  Recording/Streaming Stats?
 -  ✅ Settings Screen?
+-  Use prefix on scene/source name to filter which are visible on controller
 -  Smart Light Controls?
+-  Recording/Streaming Stats?

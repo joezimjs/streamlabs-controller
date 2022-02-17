@@ -89,7 +89,7 @@ function saveSettings() {
 	<h2 v-else-if="status == 'disconnected'">Disconnected. Please connect to OBS Studio to get started</h2>
 
 	<div :class="$style.modal" v-if="showSettings">
-		<h2 @click="showSettings = false">Settings</h2>
+		<h2>Settings</h2>
 		<div :class="$style.settingsForm">
 			<label for="host">Connection Host</label> <input v-model="host" id="host" />
 			<label for="port">Connection Port</label> <input v-model="port" id="port" />
