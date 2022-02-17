@@ -1,5 +1,5 @@
 import OBSWebSocket from 'obs-websocket-js';
-import { ref, Ref } from 'vue';
+import { computed, ref, Ref } from 'vue';
 import { useLog } from './useLog';
 
 export enum ConnectionStatus {
@@ -11,11 +11,6 @@ export enum ConnectionStatus {
 const socket = new OBSWebSocket();
 const status: Ref<ConnectionStatus> = ref(ConnectionStatus.Disconnected);
 const eventsSubscribedTo: string[] = [];
-
-const host = location.hostname;
-const port = 4444;
-const url = `${host}:${port}`;
-const password = 'Z1mm3rm4n!';
 
 const { logMessage } = useLog();
 
@@ -37,31 +32,47 @@ socket.on('error', (data: any) => {
  * Returns the public API for communicating with OBS.
  */
 export function useWebsocket() {
+	// Connection Variables
+	const host = ref<string>(localStorage.getItem('host') ?? location.hostname);
+	const port = ref<string>(localStorage.getItem('port') ?? '4444');
+	const password = ref<string>(localStorage.getItem('password') ?? '');
+
+	// Save Connection variables to localStorage to save work on refresh
+	function saveConnectionSettings() {
+		localStorage.setItem('host', host.value);
+		localStorage.setItem('port', port.value);
+		localStorage.setItem('password', password.value);
+	}
+
+	/**
+	 * Connect to OBS
+	 */
+	async function connect() {
+		if (status.value !== ConnectionStatus.Disconnected) return;
+
+		status.value = ConnectionStatus.Pending;
+
+		try {
+			await socket.connect({ address: `${host.value}:${port.value}`, password: password.value });
+		} catch (error) {
+			alert('Could Not Connect');
+		}
+	}
+
 	connect();
 
 	return {
 		status,
+		host,
+		port,
+		password,
+		saveConnectionSettings,
 		request,
 		subscribe,
 		connect,
 		disconnect: socket.disconnect.bind(socket),
 		onConnected,
 	};
-}
-
-/**
- * Connect to OBS
- */
-async function connect() {
-	if (status.value !== ConnectionStatus.Disconnected) return;
-
-	status.value = ConnectionStatus.Pending;
-
-	try {
-		await socket.connect({ address: url, password });
-	} catch (error) {
-		alert('Could Not Connect');
-	}
 }
 
 /**

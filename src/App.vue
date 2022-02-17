@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { useLog } from './hooks/useLog';
 import { useWebsocket, ConnectionStatus } from './hooks/useWebsocket';
 import SceneList from '@/components/SceneList.vue';
@@ -9,11 +9,14 @@ import RecordButton from '@/components/buttons/RecordButton.vue';
 import StreamButton from '@/components/buttons/StreamButton.vue';
 import PowerIcon from '@/components/icons/PowerIcon.vue';
 import CameraPositionControl from '@/components/CameraPositionControl.vue';
+import ScreenSwitch from '@/components/ScreenSwitch.vue';
+import AppButton from './components/buttons/AppButton.vue';
 
 useLog();
-const { status, connect, disconnect /* , request */ } = useWebsocket();
-
+const { status, host, port, password, connect, disconnect, saveConnectionSettings /* , request */ } = useWebsocket();
 // window.request = request;
+
+const showSettings = ref(false);
 
 const connectionButtonTitle = computed(() => {
 	switch (status.value) {
@@ -28,7 +31,13 @@ const connectionButtonTitle = computed(() => {
 
 function toggleConnection() {
 	if (status.value === ConnectionStatus.Connected) disconnect();
-	else if (status.value === ConnectionStatus.Disconnected) connect();
+	else connect();
+}
+
+function saveSettings() {
+	saveConnectionSettings();
+
+	showSettings.value = false;
 }
 </script>
 
@@ -43,6 +52,7 @@ function toggleConnection() {
 				<RecordButton />
 				<StreamButton />
 			</template>
+			<AppButton :class="$style.pushRight" @click="showSettings = true">Settings</AppButton>
 		</header>
 
 		<template v-if="status == 'connected'">
@@ -57,9 +67,15 @@ function toggleConnection() {
 			<div>
 				<h2 :class="$style.columnHeader">Audio Sources</h2>
 				<AudioSourceList />
-				<div :class="$style.cameraPositionContainer">
-					<h2 :class="$style.columnHeader">Camera Position</h2>
-					<CameraPositionControl />
+				<div :class="$style.controlsContainer">
+					<div :class="$style.positionContainer">
+						<h2 :class="$style.columnHeader">Screen</h2>
+						<ScreenSwitch />
+					</div>
+					<div :class="$style.positionContainer">
+						<h2 :class="$style.columnHeader">Camera Position</h2>
+						<CameraPositionControl />
+					</div>
 				</div>
 			</div>
 		</template>
@@ -71,6 +87,17 @@ function toggleConnection() {
 		</div>
 	</div>
 	<h2 v-else-if="status == 'disconnected'">Disconnected. Please connect to OBS Studio to get started</h2>
+
+	<div :class="$style.modal" v-if="showSettings">
+		<h2 @click="showSettings = false">Settings</h2>
+		<div :class="$style.settingsForm">
+			<label for="host">Connection Host</label> <input v-model="host" id="host" />
+			<label for="port">Connection Port</label> <input v-model="port" id="port" />
+			<label for="password">Auth Password</label> <input v-model="password" id="password" />
+		</div>
+		<AppButton @click="saveSettings()">Save</AppButton>
+		<AppButton @click="showSettings = false">Cancel</AppButton>
+	</div>
 </template>
 
 <style lang="scss">
@@ -89,7 +116,7 @@ body {
 <style lang="scss" module>
 .appContainer {
 	display: grid;
-	grid-template-columns: 1fr 1fr 1fr;
+	grid-template-columns: 2fr 2fr 3fr;
 	gap: 1rem;
 }
 
@@ -102,6 +129,11 @@ body {
 
 	> * {
 		margin: 0 0 0 1rem;
+	}
+
+	.pushRight {
+		margin-left: auto;
+		margin-right: 1rem;
 	}
 }
 
@@ -157,9 +189,19 @@ body {
 	margin: 0 0 1rem;
 	font-size: 1.25rem;
 }
-.cameraPositionContainer {
-	width: 50%;
-	margin: 1rem auto 0;
+
+.controlsContainer {
+	display: flex;
+	margin: 1rem -1rem 0;
+	align-items: center;
+
+	> * {
+		margin: 0 1.5rem;
+	}
+}
+.positionContainer {
+	// width: 50%;
+	// margin: 1rem auto 0;
 	text-align: center;
 }
 
@@ -190,5 +232,27 @@ body {
 	to {
 		transform: rotateZ(360deg);
 	}
+}
+
+.modal {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	background: #123;
+	padding: 2rem;
+
+	button {
+		margin: 2rem 2rem 0 0;
+		padding: 0.75rem 3rem;
+	}
+}
+
+.settingsForm {
+	display: grid;
+	grid-template-columns: max-content max-content;
+	width: auto;
+	gap: 1rem;
 }
 </style>

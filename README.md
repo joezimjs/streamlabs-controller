@@ -13,7 +13,7 @@
    -  ✅ Update list
    -  ✅ Volume Control
 -  ✅ Corner Switcher
--  Screen Switcher
+-  ✅ Screen Switcher
 -  Recording/Streaming Stats?
--  Settings Screen?
+-  ✅ Settings Screen?
 -  Smart Light Controls?
