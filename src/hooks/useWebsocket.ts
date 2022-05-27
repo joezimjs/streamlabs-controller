@@ -42,6 +42,8 @@ export function useWebsocket() {
 		localStorage.setItem('host', host.value);
 		localStorage.setItem('port', port.value);
 		localStorage.setItem('password', password.value);
+
+		connect();
 	}
 
 	/**

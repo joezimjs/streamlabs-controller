@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useLog } from './hooks/useLog';
 import { useWebsocket, ConnectionStatus } from './hooks/useWebsocket';
 import SceneList from '@/components/SceneList.vue';
@@ -11,6 +11,7 @@ import PowerIcon from '@/components/icons/PowerIcon.vue';
 import CameraPositionControl from '@/components/CameraPositionControl.vue';
 import ScreenSwitch from '@/components/ScreenSwitch.vue';
 import AppButton from './components/buttons/AppButton.vue';
+import LightBulbIcon from './components/icons/LightBulbIcon.vue';
 
 useLog();
 const { status, host, port, password, connect, disconnect, saveConnectionSettings /* , request */ } = useWebsocket();
@@ -39,10 +40,22 @@ function saveSettings() {
 
 	showSettings.value = false;
 }
+
+function turnLightsOn() {
+	fetch('https://maker.ifttt.com/trigger/smartlights_stream/with/key/davKho7ASL7nC4-ChQwpj-').catch(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
+}
+
+function turnLightsOff() {
+	fetch('https://maker.ifttt.com/trigger/smartlights_normal/with/key/davKho7ASL7nC4-ChQwpj-').catch(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
+}
+
+function goFullscreen() {
+	return document.documentElement.requestFullscreen().catch(console.log);
+}
 </script>
 
 <template>
-	<div :class="$style.appContainer">
+	<div :class="$style.appContainer" v-if="!showSettings">
 		<header :class="$style.appHeader">
 			<button :class="$style[status + 'Indicator']" :aria-label="connectionButtonTitle" @click="toggleConnection">
 				<PowerIcon :class="$style.powerIcon" />
@@ -52,6 +65,8 @@ function saveSettings() {
 				<RecordButton />
 				<StreamButton />
 			</template>
+			<AppButton @click="turnLightsOn" is-active><LightBulbIcon /> Stream Lights</AppButton>
+			<AppButton @click="turnLightsOff" is-active><LightBulbIcon /> Normal Lights</AppButton>
 			<AppButton :class="$style.pushRight" @click="showSettings = true">Settings</AppButton>
 		</header>
 
@@ -80,32 +95,49 @@ function saveSettings() {
 			</div>
 		</template>
 	</div>
-	<div v-if="status == 'pending'" :class="$style.loadingSection">
+	<div v-if="status == 'pending' && !showSettings" :class="$style.loadingSection">
 		<h2>CONNECTING</h2>
 		<div :class="$style.spinner">
 			<div :class="$style.spinnerBall"></div>
 		</div>
 	</div>
-	<h2 v-else-if="status == 'disconnected'">Disconnected. Please connect to OBS Studio to get started</h2>
+	<h2 v-else-if="status == 'disconnected' && !showSettings">
+		Disconnected. Please connect to OBS Studio to get started
+	</h2>
 
-	<div :class="$style.modal" v-if="showSettings">
-		<h2>Settings</h2>
-		<div :class="$style.settingsForm">
-			<label for="host">Connection Host</label> <input v-model="host" id="host" />
-			<label for="port">Connection Port</label> <input v-model="port" id="port" />
-			<label for="password">Auth Password</label> <input v-model="password" id="password" />
+	<div :class="$style.settingsZone" v-if="showSettings">
+		<div :class="$style.column">
+			<h2>Settings</h2>
+			<div :class="$style.settingsForm">
+				<label for="host">Connection Host</label> <input v-model="host" id="host" :class="$style.inputBox" />
+				<label for="port">Connection Port</label> <input v-model="port" id="port" :class="$style.inputBox" />
+				<label for="password">Auth Password</label>
+				<input v-model="password" id="password" :class="$style.inputBox" />
+			</div>
+			<AppButton @click="saveSettings()" is-active>Connect</AppButton>
+			<AppButton @click="showSettings = false">Cancel</AppButton>
 		</div>
-		<AppButton @click="saveSettings()">Save</AppButton>
-		<AppButton @click="showSettings = false">Cancel</AppButton>
+
+		<div :class="$style.column">
+			<AppButton @click="goFullscreen">Fullscreen</AppButton>
+		</div>
 	</div>
 </template>
 
 <style lang="scss">
+html {
+	height: 100%;
+}
 body {
 	font-family: sans-serif;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
-	background: #123;
+	background: rgb(140, 93, 140);
+	background: linear-gradient(
+		to bottom right,
+		/*rgba(75, 88, 130, 1) 0%,*/ rgba(47, 72, 88, 1) 0%,
+		rgba(24, 36, 44, 1) 100%
+	);
 	color: #e5e5e5;
 	padding: 0 1rem;
 	margin: 0;
@@ -233,14 +265,11 @@ body {
 	}
 }
 
-.modal {
-	position: absolute;
-	left: 0;
-	right: 0;
-	top: 0;
-	bottom: 0;
-	background: #123;
-	padding: 2rem;
+.settingsZone {
+	display: flex;
+	.column + .column {
+		margin-left: 2rem;
+	}
 
 	button {
 		margin: 2rem 2rem 0 0;
@@ -253,5 +282,18 @@ body {
 	grid-template-columns: max-content max-content;
 	width: auto;
 	gap: 1rem;
+	align-items: center;
+}
+
+.inputBox {
+	width: 100%;
+	padding: 0.5rem;
+	border: 0;
+	border-radius: 0.25rem;
+	background: #fff;
+	color: #000;
+	font-size: 1rem;
+	appearance: none;
+	outline: none;
 }
 </style>

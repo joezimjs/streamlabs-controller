@@ -28,7 +28,15 @@ defineProps({
 	&:hover,
 	&:focus-visible {
 		outline: none;
-		background-color: rgba(255, 255, 255, 0.1);
+		background: rgb(255, 153, 34);
+		background: linear-gradient(
+			135deg,
+			rgba(255, 153, 34, 0.45) 0%,
+			rgba(254, 107, 98, 0.45) 30%,
+			rgba(210, 91, 140, 0.45) 60%,
+			rgba(140, 93, 140, 0.45) 85%,
+			rgba(75, 88, 130, 0.45) 100%
+		);
 	}
 
 	&:disabled {
@@ -44,11 +52,27 @@ defineProps({
 }
 
 .active {
-	background-color: rgba(255, 255, 255, 0.25);
+	background: rgb(255, 153, 34);
+	background: linear-gradient(
+		135deg,
+		rgba(255, 153, 34, 0.65) 0%,
+		rgba(254, 107, 98, 0.65) 30%,
+		rgba(210, 91, 140, 0.65) 60%,
+		rgba(140, 93, 140, 0.65) 85%,
+		rgba(75, 88, 130, 0.65) 100%
+	);
 
 	&:hover,
 	&:focus-visible {
-		background-color: rgba(255, 255, 255, 0.4);
+		background: rgb(255, 153, 34);
+		background: linear-gradient(
+			135deg,
+			rgba(255, 153, 34, 1) 0%,
+			rgba(254, 107, 98, 1) 30%,
+			rgba(210, 91, 140, 1) 60%,
+			rgba(140, 93, 140, 1) 85%,
+			rgba(75, 88, 130, 1) 100%
+		);
 	}
 }
 </style>
