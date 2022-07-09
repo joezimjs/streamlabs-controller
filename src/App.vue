@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useLog } from './hooks/useLog';
 import { useWebsocket, ConnectionStatus } from './hooks/useWebsocket';
+import { useFullscreen } from '@vueuse/core';
 import SceneList from '@/components/SceneList.vue';
 import SourceList from '@/components/SourceList.vue';
 import AudioSourceList from '@/components/AudioSourceList.vue';
@@ -12,9 +13,12 @@ import CameraPositionControl from '@/components/CameraPositionControl.vue';
 import ScreenSwitch from '@/components/ScreenSwitch.vue';
 import AppButton from './components/buttons/AppButton.vue';
 import LightBulbIcon from './components/icons/LightBulbIcon.vue';
+import MaxMinIcon from './components/icons/MaxMinIcon.vue';
+import SettingsIcon from './components/icons/SettingsIcon.vue';
 
 useLog();
 const { status, host, port, password, connect, disconnect, saveConnectionSettings /* , request */ } = useWebsocket();
+const { isFullscreen, toggle: toggleFullscreen } = useFullscreen();
 // window.request = request;
 
 const showSettings = ref(false);
@@ -41,16 +45,16 @@ function saveSettings() {
 	showSettings.value = false;
 }
 
-function turnLightsOn() {
+function turnStreamLightsOn() {
 	fetch('https://maker.ifttt.com/trigger/smartlights_stream/with/key/davKho7ASL7nC4-ChQwpj-').catch(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
+}
+
+function turnWorkLightsOn() {
+	fetch('https://maker.ifttt.com/trigger/smartlights_work/with/key/davKho7ASL7nC4-ChQwpj-').catch(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
 }
 
 function turnLightsOff() {
 	fetch('https://maker.ifttt.com/trigger/smartlights_normal/with/key/davKho7ASL7nC4-ChQwpj-').catch(() => {}); // eslint-disable-line @typescript-eslint/no-empty-function
-}
-
-function goFullscreen() {
-	return document.documentElement.requestFullscreen().catch(console.log);
 }
 </script>
 
@@ -65,9 +69,13 @@ function goFullscreen() {
 				<RecordButton />
 				<StreamButton />
 			</template>
-			<AppButton @click="turnLightsOn" is-active><LightBulbIcon /> Stream Lights</AppButton>
-			<AppButton @click="turnLightsOff" is-active><LightBulbIcon /> Normal Lights</AppButton>
-			<AppButton :class="$style.pushRight" @click="showSettings = true">Settings</AppButton>
+			<AppButton @click="turnStreamLightsOn" is-active><LightBulbIcon />&nbsp;Stream</AppButton>
+			<AppButton @click="turnWorkLightsOn" is-active><LightBulbIcon />&nbsp;Work</AppButton>
+			<AppButton @click="turnLightsOff" is-active><LightBulbIcon />&nbsp;Off</AppButton>
+			<AppButton :class="$style.pushRight" @click="showSettings = true" is-active><SettingsIcon /></AppButton>
+			<AppButton :class="$style.farthestRight" @click="toggleFullscreen" is-active
+				><MaxMinIcon :is-full-screen="isFullscreen"
+			/></AppButton>
 		</header>
 
 		<template v-if="status == 'connected'">
@@ -117,10 +125,6 @@ function goFullscreen() {
 			<AppButton @click="saveSettings()" is-active>Connect</AppButton>
 			<AppButton @click="showSettings = false">Cancel</AppButton>
 		</div>
-
-		<div :class="$style.column">
-			<AppButton @click="goFullscreen">Fullscreen</AppButton>
-		</div>
 	</div>
 </template>
 
@@ -135,8 +139,10 @@ body {
 	background: rgb(140, 93, 140);
 	background: linear-gradient(
 		to bottom right,
-		/*rgba(75, 88, 130, 1) 0%,*/ rgba(47, 72, 88, 1) 0%,
-		rgba(24, 36, 44, 1) 100%
+		rgb(73, 43, 73) 0%,
+		rgb(45, 54, 83) 50%,
+		rgb(2, 47, 77) 100% /*,
+		rgba(24, 36, 44, 1) 100% */
 	);
 	color: #e5e5e5;
 	padding: 0 1rem;
@@ -165,7 +171,10 @@ body {
 
 	.pushRight {
 		margin-left: auto;
-		margin-right: 1rem;
+	}
+
+	.farthestRight {
+		margin-right: 1em;
 	}
 }
 
